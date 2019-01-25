@@ -25,4 +25,3 @@ class NextionDisplay {
 };
 
 #endif
-

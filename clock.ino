@@ -15,7 +15,7 @@ Clock::Clock(int intPin, int pinM, int pinP) {
 }
 
 void Clock::init(NextionDisplay *nd) {
-  nextionDisplay = nd;
+  m_nextionDisplay = nd;
 
   clock.begin();
   clock.setDateTime(__DATE__, __TIME__);
@@ -91,4 +91,3 @@ String Clock::getMonth() {
 String Clock::readTemperature() {
   return String(clock.readTemperature());
 }
-

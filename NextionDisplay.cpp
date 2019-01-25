@@ -16,7 +16,7 @@ void NextionDisplay::init(Nextion *nex, Clock *clo, int light) {
   myNextion = nex;
   clock = clo;
   myNextion->init();
-  myNextion->sendCommandString("dims=" + String(light)); // 20
+  myNextion->sendCommand(("dims=" + String(light)).c_str()); // 20
 }
 String NextionDisplay::listen() {
   String inString = myNextion->listen(); //check for message
@@ -63,7 +63,7 @@ void NextionDisplay::updateDisplay() {
 }
 
 void NextionDisplay::updatePage() {
-  myNextion->sendCommandString("page" + page);
+  myNextion->sendCommand(("page" + page).c_str());
   #ifdef DEBUG
   Serial.println("page refreshed : " + page);
   #endif
