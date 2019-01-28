@@ -13,13 +13,13 @@ class Clock {
   public:
     Clock(int, int, int);
     DS3231 clock;
-    NextionDisplay *m_nextionDisplay;
     RTCDateTime dt;
 
-    void init(NextionDisplay*);
-    void updateClock();
+    void init();
+    void update(String, bool);
     void increaseHour();
     void increaseMinute();
+    void update();
     
     String getMonth();
     String getDOW();

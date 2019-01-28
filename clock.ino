@@ -1,5 +1,5 @@
 #include <Wire.h>
-#include <DS3231.h>
+#include <DS3231.h> // https://github.com/jarzebski/Arduino-DS3231
 
 Clock::Clock(int intPin, int pinM, int pinP) {
   DS3231 c;
@@ -14,14 +14,11 @@ Clock::Clock(int intPin, int pinM, int pinP) {
   pinMode(pinM, INPUT);
 }
 
-void Clock::init(NextionDisplay *nd) {
-  m_nextionDisplay = nd;
-
+void Clock::init() {
   clock.begin();
-  clock.setDateTime(__DATE__, __TIME__);
 }
 
-void Clock::updateClock() {
+void Clock::update(String page, bool hourOrMin) {
   // reset need of this information
   dateChanged = false;
 
@@ -85,7 +82,33 @@ String Clock::getDOW() {
 }
 
 String Clock::getMonth() {
-  return "SHUT UP MOTHER F#CKER";
+  // return clock.dateFormat("F", dt));
+  switch(dt.month) {
+    case 1:
+      return "JANVIER";
+    case 2:
+      return "FEVRIER";
+    case 3:
+      return "MARS";
+    case 4:
+      return "AVRIL";
+    case 5:
+      return "MAI";
+    case 6:
+      return "JUIN";
+    case 7:
+      return "JUILLET";
+    case 8:
+      return "AOUT";
+    case 9:
+      return "SEPTEMBRE";
+    case 10:
+      return "OCTOBRE";
+    case 11:
+      return "NOVEMBRE";
+    default:
+      return "DECEMBRE";
+  }
 }
 
 String Clock::readTemperature() {

@@ -6,16 +6,16 @@
 class NextionDisplay {
   public:
    Nextion *myNextion;
-   Clock *clock;
+   Clock *myClock;
    NextionDisplay();
    
    void init(Nextion*, Clock*, int light);
    String listen();
    void setFrequency(float freq);
    void GetFrequency();
-   void updateDisplay();
    void updatePage();
    void updateTemperature();
+   void update();
    
    float lastFreq = 0.0;
    bool buttonSwitchPressed = false;

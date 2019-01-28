@@ -6,11 +6,13 @@ RadioController::RadioController() {
   radio = TEA5767N();
   state = false;
 }
+
 void RadioController::init(float nfreq) {
   radio.setStereoNoiseCancellingOn();
   radio.selectFrequency(nfreq);
   radio.setStandByOn();
 }
+
 void RadioController::setRadioState(bool radioState) {
   if(radioState) {
     radio.setStandByOff();
@@ -22,3 +24,6 @@ void RadioController::setRadioState(bool radioState) {
   #endif
 }
 
+void RadioController::update() {
+  
+}

@@ -1,4 +1,4 @@
-#include <Nextion.h>
+#include <Nextion.h> // https://github.com/bborncr/nextion
 #include <SoftwareSerial.h>
 #include "NextionDisplay.h"
 #include "clock.h"
@@ -14,7 +14,7 @@ NextionDisplay::NextionDisplay(){}
 
 void NextionDisplay::init(Nextion *nex, Clock *clo, int light) {
   myNextion = nex;
-  clock = clo;
+  myClock = clo;
   myNextion->init();
   myNextion->sendCommand(("dims=" + String(light)).c_str()); // 20
 }
@@ -43,21 +43,19 @@ void NextionDisplay::setFrequency(float f) {
   }
 }
 
-void NextionDisplay::updateDisplay() {
-  if(clock->dateChanged) {
-    String aString = String(clock->getDOW() + " " + clock->dt.day + " " + clock->getMonth() + " " + clock->dt.year);
+void NextionDisplay::update() {
+  if(myClock->dateChanged) {
+    String aString = String(myClock->getDOW() + " " + myClock->dt.day + " " + myClock->getMonth() + " " + myClock->dt.year);
     
     myNextion->setComponentText("home.date", aString);
     
-    aString = String(clock->clock.dateFormat("H:i", clock->dt));
-    if(clock->alarmOn) { aString = " " + aString + "."; }
-    
+    aString = ((myClock->dt.hour < 10) ? "0" : "") + String(myClock->dt.hour) + ":" + ((myClock->dt.minute < 10) ? "0" : "") + String(myClock->dt.minute);
+    if(myClock->alarmOn) { aString = " " + aString + "."; }
+
     myNextion->setComponentText("home.hour", aString);
     myNextion->setComponentText("time.hour", aString);
     
-    Serial.println(aString);
-    
-    myNextion->setComponentText("home.temperature", String(clock->clock.readTemperature()));
+    updateTemperature();
     updatePage();
   }
 }
@@ -70,7 +68,7 @@ void NextionDisplay::updatePage() {
 }
 
 void NextionDisplay::updateTemperature() {
-  myNextion->setComponentText("home.temperature", String(22.5));
+  myNextion->setComponentText("home.temperature", String(myClock->clock.readTemperature()));
 }
 
 #endif
