@@ -4,47 +4,33 @@
 
 class RadioController{
   private:
-    TEA5767N radio;
-    bool state = false;
+    TEA5767N *radio;
     float freq;
   
   public:
     RadioController() {
-      radio = TEA5767N();
-      state = false;
     }
     
-    void init(float nfreq, TEA5767N theRadio) {
-      radio = theRadio;
-      Serial.println("RadioController started");
-      radio.setStandByOn();
-      Serial.println("RadioController started");
-      radio.setStereoNoiseCancellingOn();
-      Serial.println("RadioController started");
-      radio.selectFrequency(nfreq);
-
-      Serial.println("RadioController started");
+    void begin(float defaultFrequency) {
+      radio = new TEA5767N();
+      radio->setStandByOn();
+      radio->setStereoNoiseCancellingOn();
+      radio->selectFrequency(defaultFrequency);
     }
     
     bool setRadioState() {
-      state = !state;
-      if(state) {
-        radio.setStandByOff();
+      if(radio->isStandBy()) {
+        radio->setStandByOff();
       } else {
-        radio.setStandByOn();
+        radio->setStandByOn();
       }
-      #ifdef DEBUG
-      //Serial.println("set radio state : " + String(radioState));
-      #endif
       
-      return state;
+      return radio->isStandBy();
     }
-    
-    void update() {
-      
+
+    float getFrequency() {
+      return radio->readFrequencyInMHz();
     }
 };
-  
-static RadioController myRadio;
   
 #endif

@@ -8,6 +8,8 @@ class ClockController {
     // clock data
     DS3231 rtc;
     RTCDateTime dt;
+
+    int alarmHour, alarmMinute;
   public:
     ClockController();
     
@@ -31,8 +33,9 @@ class ClockController {
     String getAlarmHour();
     String getAlarmMinute();
 
-    void resetClock();
+    void resetDateAndTime();
   private:
+    void _updateAlarm();
     String _getDOW();
     String _getMonth();
     String _getAlarmPointer();

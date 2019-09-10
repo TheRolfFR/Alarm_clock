@@ -1,28 +1,26 @@
 #include <Wire.h>
+#include "NextionDisplay.h"
+#include "RadioController.h"
 #include "Clock.h"
 
-static ClockController myClock();
+static ClockController *myClock = new ClockController();
+static NextionDisplay *myNextionDisplay = new NextionDisplay();
+static RadioController *myRadio = new RadioController();
 
-byte LED_PIN = 13;
+#define LED_PIN 13
+#define NEXTION_START_LUMINOSITY 35 // 35 - 20
+#define NEXTION_TX_PIN 4
+#define NEXTION_RX_PIN 5
+#define RADIO_DEFAULT_FREQUENCY 90
 
 void setup() {
   Serial.begin(9600);
-  myClock.begin();
-
-  pinMode(LED_PIN, OUTPUT);
+  myClock->begin();
+  myNextionDisplay->begin(NEXTION_TX_PIN, NEXTION_RX_PIN, NEXTION_START_LUMINOSITY);
+  myRadio->begin(RADIO_DEFAULT_FREQUENCY);
+  // myClock->resetDateAndTime();
 }
 
 void loop() {
-  //Serial.println(myClock.readTemperature());
-  Serial.println(myClock.getFullTime());
-  //Serial.println(myClock.getFullDate());
-  if(myClock.isAlarmOn()) {
-    digitalWrite(LED_PIN, HIGH);
-    Serial.println("alarm on");
-    myClock.armAlarm(false);
-    delay(200);
-  } else {
-    digitalWrite(LED_PIN, LOW);
-    delay(200);
-  }
+  myNextionDisplay->update();
 }

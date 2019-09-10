@@ -4,128 +4,109 @@
 #include <SoftwareSerial.h>
 #include <Nextion.h>
 #include "clock.h"
+#include "RadioController.h"
 
 #define BTN_SWITCH_RADIO "b_sr"
 #define BTN_HORM "b_horm"
-#define PIC_SW_MIN 3
 
-SoftwareSerial nextion(4, 5); // (Nextion TX, Nextion RX) 4, 5
-static Nextion myN(nextion, 9600); //create a Nextion object named myNextion using the nextion serial port @ 9600bps
-extern Clock myClock;
-extern RadioController myRadio;
+extern ClockController *myClock;
+extern RadioController *myRadio;
 
 class NextionDisplay {
   private:
-   int luminosityPin;
-   bool luminosityState = HIGH;
-   float lastFreq = 0.0;
-   bool buttonSwitchPressed = false;
-   bool radioState = false;
-   String page = "home";
-   
+    int luminosityPin;
+    bool luminosityState = HIGH;
+    float lastFreq = 0.0;
+    bool buttonSwitchPressed = false;
+    bool radioState = false;
+    String page = "home";
+
+    long milli;
+
+    SoftwareSerial *serial;
+    Nextion *nextion;
   public:
-    NextionDisplay(int lPin) {
-      luminosityPin = lPin;
+    NextionDisplay() {
     }
 
-    void init(int light) {
-      myN.init();
-      myN.sendCommand(("dims=" + String(light)).c_str()); // 20
-
-      Serial.println("NextionDisplayed started");
+    void begin(byte txPin, byte rxPin, int light) {
+      serial = new SoftwareSerial(txPin, rxPin); // (Nextion TX, Nextion RX) 4, 5
+      nextion = new Nextion(*serial, 9600); //create a Nextion object named nextion using the nextion serial port @ 9600bps
       
-      pinMode(luminosityPin, INPUT_PULLUP);
+      nextion->init();
+      nextion->sendCommand(("dims=" + String(light)).c_str()); // 20
+      goToHome();
+      milli = millis();
     }
 
-    String listen() {
-      String inString = myN.listen(); //check for message
-      if(inString != "") {
-        Serial.println("raw : " + inString);
-        if(inString.indexOf("on_") != -1) {
-          page = inString.substring(3);
+    void goToHome() {
+      _goTo("home");
+      _refreshHome();
+    }
+
+    void update() {
+      String message = _listen();
+      if(message != "") {
+        Serial.println(message);
+        if(message.startsWith("to_")) { // if a button wants to go somewhere
+          _goTo(message.substring(3)); // then go
         }
-        if(inString.indexOf("to_") != -1) {
-          page = inString.substring(3);
-          updatePage();
-        }
-        if(inString == "b_sr") {
-          bool state = myRadio.setRadioState();
-          myN.sendCommand(("sr.pic=" + String(3 + state*1)).c_str()); // 3 - 4
-        }
-        else if(inString == "increaseAlarmHour") {
-          myClock.increaseAlarmHour();
-        }
-        else if(inString == "increaseAlarmMinute") {
-          myClock.increaseAlarmMinute();
+        else if(message.startsWith("on_")) { // if you landed on a page
+          page = message.substring(3); // tell me
+
+          // if on landing to go to home
+          if(page.equals("landing")) { goToHome(); }
+        } else if(message.equals("increaseAlarmHour")) {
+          myClock->increaseAlarmHour();
+          _refreshAlarm();
+        } else if(message.equals("increaseAlarmMinute")) {
+          myClock->increaseAlarmMinute();
+          _refreshAlarm();
         }
       }
-      return inString;
-    }
 
-    void setFrequency(float f) {
-     Serial.println(String(f) + " " + String(lastFreq));
-      if(f != lastFreq) {
-        char freq_display[6]; // XXX.X\0
-        // remove one decimal to float
-        dtostrf(f, 4, 1, freq_display );
-    
-        Serial.println(freq_display);
-        
-        myN.setComponentText("home.frequency", String(freq_display));
-        myN.setComponentText("freq.frequency", String(freq_display) + " MHz");
+      // update home every minute
+      if(millis() - milli >= 60000) {
+        milli = millis();
+        _refreshHome();
       }
     }
 
-    void update(bool force = false) {
-      if(myClock.isDateChanged() || force) {
-        myClock.setDateChanged(false);
-        //Serial.println("Starting refresh");
-        
-        String aString = String(myClock.getDOW() + " " + myClock.getDt().day + " " + myClock.getMonth() + " " + myClock.getDt().year);
-        
-        myN.setComponentText("home.date", aString);
-        
-        aString = ((myClock.getDt().hour < 10) ? "0" : "") + String(myClock.getDt().hour) + ":" + ((myClock.getDt().minute < 10) ? "0" : "") + String(myClock.getDt().minute);
-        if(myClock.isAlarmOn()) { aString = " " + aString + "."; }
-    
-        myN.setComponentText("home.hour", aString);
-    
-        myN.setComponentText("time.hourText", myClock.getAlarmHour());
-        myN.setComponentText("time.minuteText", myClock.getAlarmMinute());
-        myN.setComponentText("time.pointerText", myClock.getAlarmPointer());
-        
-        updateTemperature();
-        updatePage();
-        updatePage();
-        
-        //Serial.println("Ended refresh");
-      }
-      if(digitalRead(luminosityPin) != luminosityState || force) {
-        luminosityState = digitalRead(luminosityPin);
-        if(luminosityState == HIGH) {
-          myN.sendCommand("dims=20"); // 20 luminosity high
-        } else {
-          myN.sendCommand("dims=2"); //  2 luminosity low
-        }
-        myClock.armAlarm(!luminosityState);
-      }
+  private:
+    String _listen() {
+      String r = nextion->listen();
+      r.replace(String("?"), String(""));
+      return r;
     }
+    void _goTo(String page) {
+      // sends a message to change page
+      nextion->sendCommand(String("page " + page).c_str()); // needs constant char
 
-    void updatePage() {
-      myN.sendCommand(("page " + page).c_str());
-      //Serial.println("page refreshed : " + page);
+      // if you go on home refresh it beforehand
+      if(page.equals("home")) { _refreshHome(); }
+      // if on frequency refresh frequency beforehand
+      if(page.equals("freq")) { _refreshFreq(); }
+      // if on time refresh time beforehand
+      if(page.equals("time")) { _refreshAlarm(); }
     }
-
-    void updateTemperature() {
-      myN.setComponentText("home.temperature", String(myClock.getClock().readTemperature()));
+    void _refreshPage() {
+      _goTo(page);
     }
-
-    String getPage() {
-      return page;
+    void _refreshHome() {
+      nextion->setComponentText("home.time", myClock->getFullTime());
+      nextion->setComponentText("home.date", myClock->getFullDate());
+      nextion->setComponentText("home.temperature", String(myClock->readTemperature()));
+      float f = myRadio->getFrequency();
+      nextion->setComponentText("home.frequency", String(f));
     }
-
-    bool getButtonSwitchPressed() {
-      return buttonSwitchPressed;
+    void _refreshFreq() {
+      String frequency = String(myRadio->getFrequency());
+      frequency += String("MHz");
+      nextion->setComponentText("freq.frequency", frequency);
+    }
+    void _refreshAlarm() {
+      nextion->setComponentText("time.hourText", myClock->getAlarmHour());
+      nextion->setComponentText("time.minuteText", myClock->getAlarmMinute());
     }
 };
 
