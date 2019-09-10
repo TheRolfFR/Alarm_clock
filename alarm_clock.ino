@@ -1,39 +1,28 @@
 #include <Wire.h>
-#include <SoftwareSerial.h>
-#include "RadioController.h"
-#include "NextionDisplay.h"
+#include "Clock.h"
 
-/* IF YOU WANT TO DEBUG */
+static ClockController myClock();
 
-#define DEBUG true
-
-RadioController radio;
-
-SoftwareSerial nextion(4, 5); // (Nextion TX, Nextion RX) 4, 5
-Nextion myN(nextion, 9600); //create a Nextion object named myNextion using the nextion serial port @ 9600bps
-NextionDisplay myDisplay;
-
-Clock myClock(2, 6, 7); // interruptPin, minusPin, plusPin
+byte LED_PIN = 13;
 
 void setup() {
-  pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
   Serial.begin(9600);
+  myClock.begin();
 
-  radio.init(98.4);
-
-  myClock.init();
-  //myClock.clock.setDateTime(__DATE__, __TIME__);
-  
-  myDisplay.init(&myN, &myClock, 2);
-  myDisplay.setFrequency(98.4);
-  digitalWrite(13, LOW);
+  pinMode(LED_PIN, OUTPUT);
 }
 
 void loop() {
-  myDisplay.listen();
-  
-  radio.update();
-  myClock.update(myDisplay.page, myDisplay.buttonSwitchPressed);
-  myDisplay.update();
+  //Serial.println(myClock.readTemperature());
+  Serial.println(myClock.getFullTime());
+  //Serial.println(myClock.getFullDate());
+  if(myClock.isAlarmOn()) {
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("alarm on");
+    myClock.armAlarm(false);
+    delay(200);
+  } else {
+    digitalWrite(LED_PIN, LOW);
+    delay(200);
+  }
 }

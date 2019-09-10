@@ -2,34 +2,41 @@
 #define H_CLOCK
 
 #include <DS3231.h>
-#include "NextionDisplay.h"
 
-class Clock {
+class ClockController {
   private:
-    int pinPlus;
-    int pinMinus;
-    int interruptPin;
-    long milli;
-  public:
-    Clock(int, int, int);
-    DS3231 clock;
+    // clock data
+    DS3231 rtc;
     RTCDateTime dt;
+  public:
+    ClockController();
+    
+    void begin();
+    
+    void update(String page, bool buttonPressed, String newString);
 
-    void init();
-    void update(String, bool);
-    void increaseHour();
-    void increaseMinute();
-    void update();
+    // alarm
+    void increaseAlarmHour();
     
-    String getMonth();
-    String getDOW();
+    void increaseAlarmMinute();
+    
+    void armAlarm(bool state);
 
-    String readTemperature();
-    
-    void activateAlarm();
-    
-    bool alarmOn = false;
-    bool dateChanged = false;
-    int temperature = 0;
+    float readTemperature();
+
+    String getFullTime();
+    String getFullDate();
+
+    bool isAlarmOn();
+    String getAlarmHour();
+    String getAlarmMinute();
+
+    void resetClock();
+  private:
+    String _getDOW();
+    String _getMonth();
+    String _getAlarmPointer();
+    void _getDt();
 };
+
 #endif
