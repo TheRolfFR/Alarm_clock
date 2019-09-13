@@ -6,8 +6,10 @@
 #include "clock.h"
 #include "RadioController.h"
 
-#define BTN_SWITCH_RADIO "b_sr"
-#define BTN_HORM "b_horm"
+#define SWITCH_RADIO_MESSAGE "b_switch_radio"
+#define SWITCH_RADIO_OBJNAME "switchradio"
+#define PIC_RADIO_OFF "3"
+#define PIC_RADIO_ON "4"
 
 extern ClockController *myClock;
 extern RadioController *myRadio;
@@ -62,6 +64,9 @@ class NextionDisplay {
         } else if(message.equals("increaseAlarmMinute")) {
           myClock->increaseAlarmMinute();
           _refreshAlarm();
+        } else if(message.equals(SWITCH_RADIO_MESSAGE)) {
+          myRadio->setRadioState();
+          _updateImage();
         }
       }
 
@@ -107,6 +112,17 @@ class NextionDisplay {
     void _refreshAlarm() {
       nextion->setComponentText("time.hourText", myClock->getAlarmHour());
       nextion->setComponentText("time.minuteText", myClock->getAlarmMinute());
+    }
+    void _updateImage() {
+      if(myRadio->isStandBy()) {
+        _sendCommand((String(SWITCH_RADIO_OBJNAME) + String(".pic=") + String(PIC_RADIO_OFF)).c_str());
+      } else {
+        _sendCommand((String(SWITCH_RADIO_OBJNAME) + String(".pic=") + String(PIC_RADIO_ON)).c_str());
+      }
+    }
+    void _sendCommand(const char* cmd){
+      Serial.println(cmd);
+      nextion->sendCommand(cmd);
     }
 };
 
