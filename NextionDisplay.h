@@ -67,7 +67,7 @@ class NextionDisplay {
           myClock.increaseAlarmMinute();
           _refreshAlarm();
         } else if(message.equals(SWITCH_RADIO_MESSAGE)) {
-          myRadio.setRadioState();
+          myRadio.triggerRadioState();
           _updateImage();
         } else if(message.equals("increase_frequency")) {
           _modifyFrequency(+1);

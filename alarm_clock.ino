@@ -1,10 +1,11 @@
 #include <Wire.h>
 #include "EEPROMHandler.h"
 #include "NextionDisplay.h"
-#include "RadioController.h"
 #include "OtherComponents.h"
+#include "RadioController.h"
 #include "ClockController.h"
 
+// MHz
 #define FREQ_MIN_MHZ 87.5f
 #define FREQ_MAX_MHZ 108.f
 
@@ -37,4 +38,5 @@ void setup() {
 
 void loop() {
   myNextionDisplay.update();
+  myClock.update(false);
 }

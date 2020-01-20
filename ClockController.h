@@ -3,12 +3,14 @@
 
 #include <Wire.h>
 #include <DS3231.h> // https://github.com/jarzebski/Arduino-DS3231
+#include "RadioController.h"
 // #include "lang_en.h"
 #include "lang_fr.h"
 
 #define ALARM_DELAY_MINUTE 2
 
 extern EEPROMHandler eHandler;
+extern RadioController myRadio;
 
 class ClockController {
   private:
@@ -60,8 +62,16 @@ class ClockController {
       // setting the default delay for alarm
       rtc.setAlarm2(0, 0, ALARM_DELAY_MINUTE, DS3231_MATCH_M, false);
     }
-    
-    void update(String page, bool buttonPressed, String newString);
+
+    // main update function
+    void update(bool isButtonPressed) {
+      if(isAlarmOn()) {
+        myRadio.setRadioState(true);
+        if(isButtonPressed) {
+          this->armAlarm(false);
+        }
+      }
+    }
 
     // alarm
     void increaseAlarmHour() {

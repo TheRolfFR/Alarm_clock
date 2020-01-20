@@ -21,11 +21,15 @@ class RadioController{
       radio = new TEA5767N();
       radio->setStandByOn();
       setRadioFrequency(defaultFrequency);
-      radio->setStereoNoiseCancellingOn();
+      // radio->setStereoNoiseCancellingOn();
     }
     
-    bool setRadioState() {
-      if(radio->isStandBy()) { // turn on
+    bool triggerRadioState() {
+      return this->setRadioState(this->isStandBy());
+    }
+
+    bool setRadioState(bool state) {
+      if(state) { // turn on
         radio->setStandByOff();
         radio->turnTheSoundBackOn();
       } else { // turn off
@@ -33,8 +37,9 @@ class RadioController{
         radio->setStandByOn();
       }
       
-      return radio->isStandBy();
+      return this->isStandBy();
     }
+    
     bool isStandBy() {
       return radio->isStandBy();
     }
