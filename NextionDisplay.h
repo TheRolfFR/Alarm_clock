@@ -3,16 +3,18 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 #include <Nextion.h>
-#include "clock.h"
+#include "ClockController.h"
 #include "RadioController.h"
+#include "OtherComponents.h"
 
 #define SWITCH_RADIO_MESSAGE "b_switch_radio"
 #define SWITCH_RADIO_OBJNAME "switchradio"
 #define PIC_RADIO_OFF "3"
 #define PIC_RADIO_ON "4"
 
-extern ClockController *myClock;
-extern RadioController *myRadio;
+extern OtherComponents myOtherComponents;
+extern ClockController myClock;
+extern RadioController myRadio;
 
 class NextionDisplay {
   private:
@@ -36,7 +38,7 @@ class NextionDisplay {
       nextion = new Nextion(*serial, 9600); //create a Nextion object named nextion using the nextion serial port @ 9600bps
       
       nextion->init();
-      nextion->sendCommand(("dims=" + String(light)).c_str()); // 20
+      _sendCommand(("dims=" + String(light)).c_str()); // 20
       goToHome();
       milli = millis();
     }
@@ -59,14 +61,18 @@ class NextionDisplay {
           // if on landing to go to home
           if(page.equals("landing")) { goToHome(); }
         } else if(message.equals("increaseAlarmHour")) {
-          myClock->increaseAlarmHour();
+          myClock.increaseAlarmHour();
           _refreshAlarm();
         } else if(message.equals("increaseAlarmMinute")) {
-          myClock->increaseAlarmMinute();
+          myClock.increaseAlarmMinute();
           _refreshAlarm();
         } else if(message.equals(SWITCH_RADIO_MESSAGE)) {
-          myRadio->setRadioState();
+          myRadio.setRadioState();
           _updateImage();
+        } else if(message.equals("increase_frequency")) {
+          _modifyFrequency(+1);
+        } else if(message.equals("decrease_frequency")) {
+          _modifyFrequency(-0.1);
         }
       }
 
@@ -90,7 +96,7 @@ class NextionDisplay {
       // if you go on home refresh it beforehand
       if(page.equals("home")) { _refreshHome(); }
       // if on frequency refresh frequency beforehand
-      if(page.equals("freq")) { _refreshFreq(); }
+      if(page.equals("freq")) { _refreshFreq(); _updateImage(); }
       // if on time refresh time beforehand
       if(page.equals("time")) { _refreshAlarm(); }
     }
@@ -98,23 +104,24 @@ class NextionDisplay {
       _goTo(page);
     }
     void _refreshHome() {
-      nextion->setComponentText("home.time", myClock->getFullTime());
-      nextion->setComponentText("home.date", myClock->getFullDate());
-      nextion->setComponentText("home.temperature", String(myClock->readTemperature()));
-      float f = myRadio->getFrequency();
+      nextion->setComponentText("home.time", myClock.getFullTime());
+      nextion->setComponentText("home.date", myClock.getFullDate());
+      nextion->setComponentText("home.temperature", String(myClock.readTemperature()));
+      float f = myRadio.getFrequency();
       nextion->setComponentText("home.frequency", String(f));
     }
     void _refreshFreq() {
-      String frequency = String(myRadio->getFrequency());
+      String frequency = String(myRadio.getFrequency());
+      Serial.println(frequency);
       frequency += String("MHz");
       nextion->setComponentText("freq.frequency", frequency);
     }
     void _refreshAlarm() {
-      nextion->setComponentText("time.hourText", myClock->getAlarmHour());
-      nextion->setComponentText("time.minuteText", myClock->getAlarmMinute());
+      nextion->setComponentText("time.hourText", myClock.getAlarmHour());
+      nextion->setComponentText("time.minuteText", myClock.getAlarmMinute());
     }
     void _updateImage() {
-      if(myRadio->isStandBy()) {
+      if(myRadio.isStandBy()) {
         _sendCommand((String(SWITCH_RADIO_OBJNAME) + String(".pic=") + String(PIC_RADIO_OFF)).c_str());
       } else {
         _sendCommand((String(SWITCH_RADIO_OBJNAME) + String(".pic=") + String(PIC_RADIO_ON)).c_str());
@@ -123,6 +130,10 @@ class NextionDisplay {
     void _sendCommand(const char* cmd){
       Serial.println(cmd);
       nextion->sendCommand(cmd);
+    }
+    void _modifyFrequency(float variation) {
+      myRadio.modifyFrequency(variation);
+      _refreshFreq();
     }
 };
 

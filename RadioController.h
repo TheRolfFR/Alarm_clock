@@ -1,17 +1,20 @@
 #ifndef H_RADIOCONTROLLER
 #define H_RADIOCONTROLLER
 #include <TEA5767N.h> // https://github.com/mroger/TEA5767
+#include "OtherComponents.h"
 
-#define FREQ_MAX_MHZ 108
-#define FREQ_MIN_MHZ 87.5
+extern EEPROMHandler eHandler;
+extern OtherComponents myOtherComponents;
 
 class RadioController{
   private:
     TEA5767N *radio;
     float freq;
+
+    float minFreq, maxFreq;
   
   public:
-    RadioController() {
+    RadioController(float mini, float maxi) : minFreq(mini), maxFreq(maxi) {
     }
     
     void begin(float defaultFrequency) {
@@ -22,9 +25,11 @@ class RadioController{
     }
     
     bool setRadioState() {
-      if(radio->isStandBy()) {
+      if(radio->isStandBy()) { // turn on
         radio->setStandByOff();
-      } else {
+        radio->turnTheSoundBackOn();
+      } else { // turn off
+        radio->mute();
         radio->setStandByOn();
       }
       
@@ -39,11 +44,12 @@ class RadioController{
     }
 
     void modifyFrequency(float variation) {
-      setRadioFrequency(Math.min(Math.max(freq + variation, FREQ_MIN_MHZ), FREQ_MAX_MHZ));
+      this->setRadioFrequency(constrain(freq + variation, minFreq, maxFreq));
     }
 
     void setRadioFrequency(float frequence) {
       freq = frequence;
+      eHandler.setRadioFrequency(frequence);
       radio->selectFrequency(freq);
     }
 };
