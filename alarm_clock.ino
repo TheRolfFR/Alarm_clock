@@ -26,7 +26,7 @@ static NextionDisplay myNextionDisplay;
 static RadioController myRadio(FREQ_MIN_MHZ, FREQ_MAX_MHZ);
 
 void setup() {
-  eHandler.setDefaults(RADIO_DEFAULT_FREQUENCY, ALARM_DEFAULT_HOUR, ALARM_DEFAULT_MINUTE);
+  // eHandler.setDefaults(RADIO_DEFAULT_FREQUENCY, ALARM_DEFAULT_HOUR, ALARM_DEFAULT_MINUTE);
   
   Serial.begin(9600);
   myClock.begin(eHandler.getAlarmHour(), eHandler.getAlarmMinute());
